@@ -56,12 +56,19 @@ let highScore = localStorage.getItem("high-score") || 0;
 document.addEventListener('keyup', setDirection);
 playAgainElement.addEventListener("click", playAgain);
 
-function drawSquare(x, y, color) {
-    canvasContext.fillStyle = color;
-    canvasContext.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
-    canvasContext.strokeStyle = borderSquareColor;
-    canvasContext.strokeRect(squareSize * x, squareSize * y, squareSize, squareSize);
+function mainLogic() {
+    drawSnakeTable();
+    drawSnake();
+    drawFood();
+    moveSnake();
+    renderScore();
+    if (hitWall() || hitSelf()) {
+        clearInterval(gameLoop);
+        snakeDeadAudio.play();
+        gameOver();
+    }
 }
+mainLogic();
 
 function drawSnakeTable() {
     for (let x = 0; x < horizontalSquare; x++) {
@@ -87,6 +94,11 @@ function drawSnake() {
             drawSquare(square.x, square.y, snakeBodyColor);
         }
     })
+}
+
+function drawFood() {
+    const foodColor = "#ff3300";
+    drawSquare(food.x, food.y, foodColor);
 }
 
 function moveSnake() {
@@ -118,6 +130,38 @@ function moveSnake() {
         snake.pop();
     }
     snake.unshift(head);
+}
+
+function renderScore() {
+    score = snake.length - initialSnakeLength;
+    scoreElement.innerHTML = "Your score: " + score;
+    highScoreElement.innerHTML = "High score: " + highScore;
+}
+
+function hitWall() {
+    const head = snake[0];
+    return (
+        head.x < 0 || head.x >= horizontalSquare || head.y < 0 || head.y >= verticalSquare
+    )
+}
+
+function hitSelf() {
+    const snakeBody = [...snake];
+    const head = snakeBody.shift();
+    return snakeBody.some(function (square) {
+        if (square.x === head.x && square.y === head.y) {
+            return true;
+        } else {
+            return false;
+        }
+    });
+}
+
+function drawSquare(x, y, color) {
+    canvasContext.fillStyle = color;
+    canvasContext.fillRect(x * squareSize, y * squareSize, squareSize, squareSize);
+    canvasContext.strokeStyle = borderSquareColor;
+    canvasContext.strokeRect(squareSize * x, squareSize * y, squareSize, squareSize);
 }
 
 function hasEatenFood() {
@@ -159,36 +203,6 @@ function createFood() {
     return food;
 }
 
-function drawFood() {
-    const foodColor = "#ff3300";
-    drawSquare(food.x, food.y, foodColor);
-}
-
-function renderScore() {
-    score = snake.length - initialSnakeLength;
-    scoreElement.innerHTML = "Your score: " + score;
-    highScoreElement.innerHTML = "High score: " + highScore;
-}
-
-function hitWall() {
-    const head = snake[0];
-    return (
-        head.x < 0 || head.x >= horizontalSquare || head.y < 0 || head.y >= verticalSquare
-    )
-}
-
-function hitSelf() {
-    const snakeBody = [...snake];
-    const head = snakeBody.shift();
-    return snakeBody.some(function (square) {
-        if (square.x === head.x && square.y === head.y) {
-            return true;
-        } else {
-            return false;
-        }
-    });
-}
-
 function gameOver() {
     let gameOverScoreElement = document.querySelector(".game-over-score .current");
     let gameOverHighScoreElement = document.querySelector(".game-over-score .high");
@@ -199,20 +213,6 @@ function gameOver() {
     gameOverHighScoreElement.innerHTML = "High score: " + highScore;
     gameOverElement.classList.remove("hide");
 }
-
-function mainLogic() {
-    drawSnakeTable();
-    drawSnake();
-    drawFood();
-    moveSnake();
-    renderScore();
-    if (hitWall() || hitSelf()) {
-        clearInterval(gameLoop);
-        snakeDeadAudio.play();
-        gameOver();
-    }
-}
-mainLogic();
 
 function playAgain() {
     startContainerELement.classList.remove("hide");
